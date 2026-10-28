@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>기숙사 룸메 성향 검사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+
+/* Layout: personality-test flow — soft hero band, centered question stack with 7-point circles, result header with 5-letter code tiles + percentage bars */
+:root {
+  --bg: #ffffff;
+  --band: #eef8f4;
+  --surface: #ffffff;
+  --ink: #2b3340;
+  --muted: #727b88;
+  --line: #e3e7ec;
+  --agree: #2bae7e;
+  --disagree: #8a63c9;
+  --cta: #2bae7e;
+  --cta-ink: #ffffff;
+  --c-time: #5b6cf0;
+  --c-clean: #1aa6a0;
+  --c-sound: #f0795b;
+  --c-stay: #e3a033;
+  --c-social: #c05fb8;
+  --warn: #d4493a;
+  --font-display: "Jua", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15191f; --band: #1a2622; --surface: #1d232b; --ink: #e8ecf1; --muted: #9ba4b0; --line: #2f3742;
+    --agree: #3cc392; --disagree: #a685e0; --cta: #3cc392; --cta-ink: #0f1a15;
+    --c-time: #8391ff; --c-clean: #3cc4bd; --c-sound: #ff9479; --c-stay: #f0b552; --c-social: #dc80d4;
+    --warn: #ff8576; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15191f; --band: #1a2622; --surface: #1d232b; --ink: #e8ecf1; --muted: #9ba4b0; --line: #2f3742;
+  --agree: #3cc392; --disagree: #a685e0; --cta: #3cc392; --cta-ink: #0f1a15;
+  --c-time: #8391ff; --c-clean: #3cc4bd; --c-sound: #ff9479; --c-stay: #f0b552; --c-social: #dc80d4;
+  --warn: #ff8576; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.band { background: var(--band); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 36px; }
+.main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.inner { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+.center { text-align: center; justify-items: center; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; line-height: 1.25; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 6vw, 2.8rem); }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.25rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.lead { font-size: 1.05rem; color: var(--muted); max-width: 34em; }
+
+button { font: inherit; cursor: pointer; }
+.btn { border: 0; border-radius: 999px; padding: 13px 28px; font-weight: 700; background: var(--cta); color: var(--cta-ink); font-size: 1rem; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+.btn:focus-visible, .scale input:focus-visible + span, .seg input:focus-visible + span { outline: 3px solid var(--c-time); outline-offset: 3px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+
+/* intro: five dimension cards */
+.dims { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%; }
+.dim { border-radius: 14px; padding: 14px; display: grid; gap: 6px; justify-items: center; text-align: center; border: 1px solid var(--line); background: var(--surface); }
+.dim .letters { font-family: var(--font-display); font-size: 1.5rem; color: var(--dc); }
+.dim b { font-size: .95rem; }
+.dim span { font-size: .8rem; color: var(--muted); }
+
+/* progress */
+.progress { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; display: grid; gap: 6px; }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--agree); width: 0; transition: width .35s ease; }
+.progress .meta { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* questions */
+.q { display: grid; gap: 18px; justify-items: center; text-align: center; padding-block: 34px; border-bottom: 1px solid var(--line); transition: opacity .25s; }
+.q.done { opacity: .38; }
+.q.done:hover, .q.done:focus-within { opacity: 1; }
+.q.missing .qtext { color: var(--warn); }
+.qtext { font-size: 1.15rem; font-weight: 600; max-width: 30em; }
+.scale { display: grid; grid-template-columns: auto auto auto; align-items: center; gap: 14px; }
+.scale .end { font-weight: 700; font-size: .95rem; }
+.scale .end.no { color: var(--disagree); }
+.scale .end.yes { color: var(--agree); }
+.dots { display: flex; align-items: center; gap: clamp(6px, 2vw, 14px); }
+.dots label { display: grid; place-items: center; cursor: pointer; padding: 2px; }
+.scale input, .seg input { position: absolute; opacity: 0; pointer-events: none; }
+.dots span { display: block; border-radius: 50%; border: 2.5px solid var(--dc); transition: background .15s, transform .15s; }
+.dots label:hover span { background: color-mix(in srgb, var(--dc) 20%, transparent); }
+.dots input:checked + span { background: var(--dc); transform: scale(1.05); }
+.dots label:nth-child(1) span, .dots label:nth-child(6) span { width: 54px; height: 54px; }
+.dots label:nth-child(2) span, .dots label:nth-child(5) span { width: 42px; height: 42px; }
+.dots label:nth-child(3) span, .dots label:nth-child(4) span { width: 32px; height: 32px; }
+.dots label:nth-child(-n+3) { --dc: var(--disagree); }
+.dots label:nth-child(n+4) { --dc: var(--agree); }
+.ends-mobile { display: none; width: 100%; justify-content: space-between; font-weight: 700; font-size: .9rem; }
+.ends-mobile .no { color: var(--disagree); } .ends-mobile .yes { color: var(--agree); }
+
+.seg { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.seg label { cursor: pointer; }
+.seg span { display: inline-block; padding: 9px 18px; border: 2px solid var(--line); border-radius: 999px; font-weight: 500; }
+.seg input:checked + span { background: var(--agree); border-color: var(--agree); color: var(--cta-ink); font-weight: 700; }
+
+.nav { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; padding-top: 28px; }
+
+/* result */
+.code { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.code span { font-family: var(--font-display); font-size: clamp(2rem, 8vw, 3rem); width: clamp(52px, 13vw, 72px); aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; border-radius: 16px; background: var(--dc); color: #fff; }
+.code .dash { font-family: var(--font-display); font-size: clamp(2rem, 8vw, 3rem); color: var(--muted); height: clamp(52px, 13vw, 72px); display: grid; place-items: center; }
+.code .letter { display: grid; gap: 8px; justify-items: center; }
+.code .letter small { font-size: .95rem; font-weight: 700; color: var(--dc); }
+.overall { max-width: 40em; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; display: grid; gap: 6px; }
+.overall b { font-size: .9rem; color: var(--muted); }
+.overall p { font-size: 1rem; line-height: 1.75; }
+.typename { font-size: clamp(2rem, 6vw, 2.6rem); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.chip { font-size: .85rem; padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+
+.traits { display: grid; gap: 26px; }
+.trait { display: grid; gap: 8px; }
+.trait-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.trait-top b { font-size: .9rem; color: var(--muted); font-weight: 600; }
+.trait-top strong { font-size: 1.1rem; color: var(--dc); }
+.meter { position: relative; height: 14px; border-radius: 99px; background: color-mix(in srgb, var(--dc) 18%, var(--bg)); }
+.meter .fill { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: var(--dc); }
+.meter .knob { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--surface); border: 4px solid var(--dc); }
+.poles { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
+.poles .on { color: var(--dc); font-weight: 700; }
+.trait p { font-size: .95rem; color: var(--muted); line-height: 1.7; }
+
+.card { border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 16px; background: var(--surface); }
+textarea { width: 100%; min-height: 240px; resize: vertical; font: inherit; font-size: .92rem; line-height: 1.6; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.toast { font-size: .9rem; color: var(--agree); font-weight: 700; min-height: 1.2em; }
+.note { font-size: .85rem; color: var(--muted); }
+.types { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.type { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; align-content: start; }
+.type .tcode { font-family: var(--font-display); color: var(--muted); letter-spacing: .06em; font-size: 1.05rem; }
+.type b { font-size: 1rem; }
+.type .tdesc { font-size: .85rem; color: var(--muted); }
+.type.me { border: 2px solid var(--agree); background: color-mix(in srgb, var(--agree) 10%, var(--surface)); }
+.type.me .tcode { color: var(--agree); }
+.share { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 22px; align-items: start; }
+.share img { width: 100%; max-width: 100%; height: auto; min-height: 200px; border-radius: 14px; border: 1px solid var(--line); background: var(--band); display: block; }
+.share-side { display: grid; gap: 10px; justify-items: start; }
+details summary { cursor: pointer; color: var(--muted); font-weight: 600; padding-block: 4px; }
+details textarea { margin-top: 10px; }
+@media (max-width: 620px) { .share { grid-template-columns: 1fr; } .share img { max-width: 360px; margin: 0 auto; } }
+
+@media (max-width: 520px) {
+  .scale { grid-template-columns: 1fr; gap: 8px; }
+  .scale > .end { display: none; }
+  .ends-mobile { display: flex; }
+  .dots { gap: 4px; justify-content: space-between; width: 100%; }
+  .dots label:nth-child(1) span, .dots label:nth-child(6) span { width: 44px; height: 44px; }
+  .dots label:nth-child(2) span, .dots label:nth-child(5) span { width: 35px; height: 35px; }
+  .dots label:nth-child(3) span, .dots label:nth-child(4) span { width: 27px; height: 27px; }
+  .card { padding: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<!-- INTRO -->
+<div id="intro">
+  <section class="band">
+    <div class="inner center">
+      <h1>기숙사 룸메 성향 검사</h1>
+      <p class="lead">25개 문항에 답하면 나의 기숙사 생활 유형을 알려드려요. 정답은 없으니 평소 모습대로 솔직하게 골라 주세요.</p>
+      <div class="row">
+        <button class="btn" id="startBtn">검사 시작하기</button>
+        <button class="btn ghost" id="sampleBtn">예시 결과 보기</button>
+      </div>
+      <p class="note">약 5분 소요 · 결과는 이 브라우저에만 저장돼요</p>
+    </div>
+  </section>
+  <section class="main">
+    <div class="inner center">
+      <h3>다섯 가지 생활 성향을 알아봐요</h3>
+      <div class="dims" id="dimList"></div>
+    </div>
+  </section>
+</div>
+
+<!-- QUIZ -->
+<section class="main" id="quiz" hidden>
+  <div class="inner">
+    <div class="progress">
+      <div class="meta"><span id="stepName"></span><span id="stepCount"></span></div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+    <div id="stepBody"></div>
+    <div class="nav">
+      <button class="btn ghost" id="prevBtn">이전</button>
+      <button class="btn" id="nextBtn">다음</button>
+    </div>
+  </div>
+</section>
+
+<!-- RESULT -->
+<div id="result" hidden></div>
+
+<script>
+const AXES = [
+  { key: "time", name: "생활 시간", color: "var(--c-time)",
+    left:  { code: "M", label: "아침형", word: "얼리버드" },
+    right: { code: "N", label: "저녁형", word: "올빼미" },
+    desc: { left: "일찍 자고 일찍 일어나는 생활이 몸에 익은 타입이에요. 보통 자정 전에는 잠자리에 들고, 아침 시간을 알차게 쓰는 편이에요. 밤늦게까지 불을 켜거나 키보드를 쓰는 룸메이트와는 소등 시간과 스탠드 사용 여부를 처음에 정해두면 좋아요. 비슷한 아침형 룸메이트와 지내면 생활 리듬이 맞아 훨씬 편해요.",
+            right: "밤에 깨어 있는 시간이 길고, 늦은 시간에 집중이 더 잘 되는 타입이에요. 과제나 게임, 영상 시청을 자정 이후까지 하는 날이 많고 아침 일찍 일어나는 건 힘든 편이에요. 일찍 자는 룸메이트와 지낸다면 스탠드와 이어폰을 챙기고, 늦게 움직일 때는 조용히 하는 배려가 필요해요. 비슷한 저녁형 룸메이트와는 서로 눈치 보지 않고 편하게 지낼 수 있어요." } },
+  { key: "clean", name: "청결 습관", color: "var(--c-clean)",
+    left:  { code: "C", label: "깔끔형", word: "정리왕" },
+    right: { code: "F", label: "여유형", word: "자유인" },
+    desc: { left: "방이 정리되어 있어야 마음이 편한 타입이에요. 책상이나 바닥에 물건이 나와 있으면 신경이 쓰이고, 청소나 빨래를 미루지 않고 바로 하는 편이에요. 정리 기준이 다른 룸메이트와는 공용 공간 청소 주기와 쓰레기 버리는 날을 미리 정해두면 갈등을 줄일 수 있어요. 비슷하게 깔끔한 룸메이트와 지내면 방을 쾌적하게 유지하기 쉬워요.",
+            right: "조금 어질러져 있어도 크게 신경 쓰지 않는 털털한 타입이에요. 청소나 빨래는 쌓이면 한 번에 하는 편이고, 정리보다 편하게 지내는 걸 더 중요하게 생각해요. 깔끔한 룸메이트와 지낸다면 내 자리는 자유롭게 쓰더라도 공용 공간과 쓰레기만큼은 함께 정한 규칙을 지키는 게 좋아요. 비슷하게 여유로운 룸메이트와는 서로 잔소리 없이 편하게 지낼 수 있어요." } },
+  { key: "sound", name: "소리", color: "var(--c-sound)",
+    left:  { code: "Q", label: "조용형", adj: "조용하고" },
+    right: { code: "L", label: "활발형", adj: "활기차고" },
+    desc: { left: "소리에 민감해서 조용한 환경을 좋아하는 타입이에요. 작은 소리에도 잠에서 깨기 쉽고, 통화나 알람, 키보드 소리 같은 생활 소음이 신경 쓰이는 편이에요. 방에서 통화하는 시간, 알람 횟수, 스피커 사용 여부를 처음에 룸메이트와 이야기해 두면 좋아요. 비슷하게 조용한 룸메이트와 지내면 편하게 쉬고 잠들 수 있어요.",
+            right: "방에서 소리를 내는 일이 많은 활발한 타입이에요. 통화나 영상 통화를 자주 하고, 음악이나 영상을 스피커로 트는 걸 편하게 느끼는 편이에요. 소리에 민감한 룸메이트와 지낸다면 늦은 시간에는 이어폰을 쓰고, 긴 통화는 복도나 휴게실에서 하는 배려가 필요해요. 비슷하게 활발한 룸메이트와는 소리 때문에 서로 눈치 보지 않고 지낼 수 있어요." } },
+  { key: "stay", name: "방 사용", color: "var(--c-stay)",
+    left:  { code: "H", label: "방순이형" },
+    right: { code: "O", label: "외출형" },
+    desc: { left: "수업이 없을 때는 주로 방에서 시간을 보내는 타입이에요. 공부, 휴식, 취미까지 방에서 하는 경우가 많아서 방이 편한 쉼터가 되는 게 중요해요. 룸메이트도 방에 오래 있는 편이라면 서로 혼자만의 시간이 필요할 때를 미리 이야기해 두면 좋아요. 밖에서 지내는 시간이 많은 외출형 룸메이트와 지내면 방을 여유롭게 쓸 수 있어요.",
+            right: "도서관, 카페, 동아리, 본가 등 밖에서 지내는 시간이 많은 타입이에요. 방은 주로 잠자고 씻는 곳이고, 저녁이나 주말에는 방을 비우는 날이 많은 편이에요. 늦게 들어오는 날에는 룸메이트가 자고 있을 수 있으니 조용히 들어오는 배려가 필요해요. 방에서 혼자 시간을 보내고 싶은 방순이형 룸메이트와 잘 맞아요." } },
+  { key: "social", name: "교류", color: "var(--c-social)",
+    left:  { code: "I", label: "각자형", phrase: "각자 생활을 존중하는" },
+    right: { code: "T", label: "함께형", phrase: "함께 어울리길 좋아하는" },
+    desc: { left: "룸메이트와 적당한 거리를 두고 각자 생활하는 게 편한 타입이에요. 인사와 기본적인 배려는 하지만, 밥이나 일정을 꼭 함께할 필요는 없다고 생각해요. 친하게 지내고 싶어 하는 룸메이트와 지낸다면 혼자 있고 싶은 시간을 솔직하게 말해 두면 오해를 줄일 수 있어요. 비슷하게 각자 생활을 존중하는 룸메이트와 지내면 부담 없이 편하게 지낼 수 있어요.",
+            right: "룸메이트와 친하게 지내고 싶은 타입이에요. 밥도 같이 먹고 고민 이야기도 나누며, 방에 친구가 잠깐 오는 것도 괜찮다고 생각해요. 혼자 있는 시간을 중요하게 여기는 룸메이트와 지낸다면 상대가 원하는 거리를 존중해 주는 게 좋아요. 비슷하게 함께 어울리길 좋아하는 룸메이트와 지내면 기숙사 생활이 훨씬 즐거워져요." } },
+];
+const AX = Object.fromEntries(AXES.map(a => [a.key, a]));
+
+
+// dir: +1 = "그렇다"일수록 오른쪽 성향, -1 = 왼쪽 성향. 축이 섞이도록 순서를 배치
+const QUESTIONS = [
+  { axis: "time",   dir: -1, text: "평일에는 보통 자정 전에 잠든다." },
+  { axis: "clean",  dir: -1, text: "책상이나 바닥에 물건이 나와 있으면 신경이 쓰인다." },
+  { axis: "sound",  dir: -1, text: "작은 소리에도 잠에서 쉽게 깬다." },
+  { axis: "stay",   dir: -1, text: "수업이 없을 때는 주로 방에서 시간을 보낸다." },
+  { axis: "social", dir:  1, text: "룸메이트와 밥을 같이 먹거나 같이 다니면 좋겠다." },
+
+  { axis: "time",   dir:  1, text: "밤늦게 과제하거나 게임할 때 집중이 더 잘 된다." },
+  { axis: "clean",  dir: -1, text: "방 청소는 일주일에 두 번 이상 한다." },
+  { axis: "sound",  dir:  1, text: "방에서 통화나 영상 통화를 자주 한다." },
+  { axis: "stay",   dir:  1, text: "주말에는 본가에 가거나 밖에서 지내는 날이 많다." },
+  { axis: "social", dir: -1, text: "방에서는 혼자만의 시간을 갖는 게 중요하다." },
+
+  { axis: "time",   dir: -1, text: "수업이 없는 날에도 오전 9시 전에 일어나는 편이다." },
+  { axis: "clean",  dir:  1, text: "빨래나 쓰레기가 며칠 쌓여도 크게 신경 쓰지 않는다." },
+  { axis: "sound",  dir:  1, text: "이어폰 없이 스피커로 음악이나 영상을 트는 편이다." },
+  { axis: "stay",   dir:  1, text: "방보다 도서관이나 카페에서 공부하는 게 편하다." },
+  { axis: "social", dir:  1, text: "룸메이트가 친구를 방에 잠깐 데려와도 괜찮다." },
+
+  { axis: "time",   dir: -1, text: "알람이 울리면 미루지 않고 바로 일어나는 편이다." },
+  { axis: "clean",  dir: -1, text: "옷은 입고 나서 바로 옷장이나 옷걸이에 정리한다." },
+  { axis: "sound",  dir: -1, text: "키보드나 알람 소리 같은 생활 소음이 신경 쓰인다." },
+  { axis: "stay",   dir:  1, text: "약속이나 동아리 활동으로 늦게 들어오는 날이 많다." },
+  { axis: "social", dir: -1, text: "룸메이트와는 인사만 하는 사이여도 괜찮다." },
+
+  { axis: "time",   dir:  1, text: "주말에는 늦잠을 자는 편이다." },
+  { axis: "clean",  dir:  1, text: "책상 위가 어질러져 있어도 공부하는 데 지장이 없다." },
+  { axis: "sound",  dir:  1, text: "조용한 것보다 음악이나 영상 소리가 들리는 게 편하다." },
+  { axis: "stay",   dir: -1, text: "하루 중 방에 있는 시간이 가장 길다." },
+  { axis: "social", dir:  1, text: "룸메이트와 고민 이야기도 나눌 수 있으면 좋겠다." },
+];
+
+const INFO = [
+  { key: "smoke", label: "흡연 여부", options: ["비흡연", "흡연"] },
+  { key: "snore", label: "코골이·잠버릇", options: ["없음", "조금 있음", "있음"] },
+  { key: "temp",  label: "선호하는 방 온도", options: ["시원하게", "보통", "따뜻하게"] },
+  { key: "food",  label: "방에서 음식 먹기", options: ["괜찮음", "환기하면 괜찮음", "간단한 것만", "싫음"] },
+];
+
+const PER_PAGE = 5;
+const QPAGES = Math.ceil(QUESTIONS.length / PER_PAGE);
+const TOTAL_STEPS = QPAGES + 1;
+// '보통' 없이 6단계: 어느 쪽이든 반드시 기울도록 함
+const LIKERT = ["매우 아니다", "아니다", "약간 아니다", "약간 그렇다", "그렇다", "매우 그렇다"];
+
+let state = { answers: {}, info: {}, step: 0 };
+const $ = s => document.querySelector(s);
+
+function load() { try { const s = JSON.parse(localStorage.getItem("roommate-test-v3") || "null"); if (s && s.answers) state = Object.assign(state, s); } catch (e) {} }
+function save() { try { localStorage.setItem("roommate-test-v3", JSON.stringify(state)); } catch (e) {} }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+function show(id) {
+  ["#intro", "#quiz", "#result"].forEach(s => $(s).hidden = (s !== id));
+  window.scrollTo(0, 0);
+}
+
+function renderIntro() {
+  $("#dimList").innerHTML = AXES.map(a => `
+    <div class="dim" style="--dc:${a.color}">
+      <span class="letters">${a.left.code} · ${a.right.code}</span>
+      <b>${a.name}</b>
+      <span>${a.left.label} vs ${a.right.label}</span>
+    </div>`).join("");
+}
+
+function answeredCount() { return Object.keys(state.answers).length; }
+function updateBar() {
+  const done = answeredCount() + Object.keys(state.info).length;
+  $("#barFill").style.width = `${Math.round(done / (QUESTIONS.length + INFO.length) * 100)}%`;
+}
+
+function renderStep() {
+  $("#stepCount").textContent = `${state.step + 1} / ${TOTAL_STEPS}`;
+  $("#prevBtn").textContent = state.step === 0 ? "처음으로" : "이전";
+  $("#nextBtn").textContent = state.step === TOTAL_STEPS - 1 ? "결과 보기" : "다음";
+  updateBar();
+
+  if (state.step < QPAGES) {
+    $("#stepName").textContent = "생활 성향 문항";
+    const start = state.step * PER_PAGE;
+    const qs = QUESTIONS.slice(start, start + PER_PAGE).map((q, k) => ({ ...q, i: start + k }));
+    $("#stepBody").innerHTML = qs.map(q => `
+      <div class="q ${state.answers[q.i] ? "done" : ""}" data-q="${q.i}">
+        <div class="qtext">${q.text}</div>
+        <div class="scale" role="radiogroup" aria-label="${esc(q.text)}">
+          <span class="end no">아니다</span>
+          <div class="dots">
+            ${LIKERT.map((l, v) => `<label title="${l}"><input type="radio" id="q${q.i}-${v}" name="q${q.i}" value="${v + 1}" ${state.answers[q.i] === v + 1 ? "checked" : ""} aria-label="${l}"><span></span></label>`).join("")}
+          </div>
+          <span class="end yes">그렇다</span>
+          <div class="ends-mobile"><span class="no">아니다</span><span class="yes">그렇다</span></div>
+        </div>
+      </div>`).join("");
+  } else {
+    $("#stepName").textContent = "생활 정보";
+    $("#stepBody").innerHTML = INFO.map(f => `
+      <div class="q ${state.info[f.key] ? "done" : ""}" data-info="${f.key}">
+        <div class="qtext">${f.label}</div>
+        <div class="seg">${f.options.map((o, j) => `<label><input type="radio" id="i-${f.key}-${j}" name="i-${f.key}" value="${o}" ${state.info[f.key] === o ? "checked" : ""}><span>${o}</span></label>`).join("")}</div>
+      </div>`).join("");
+  }
+
+  $("#stepBody").querySelectorAll("input[type=radio]").forEach(inp => inp.addEventListener("change", e => {
+    const t = e.target, box = t.closest(".q");
+    if (t.name.startsWith("q")) state.answers[+t.name.slice(1)] = +t.value;
+    else state.info[t.name.slice(2)] = t.value;
+    box.classList.remove("missing"); box.classList.add("done");
+    save(); updateBar();
+    const next = box.nextElementSibling;
+    if (next && !next.classList.contains("done")) {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      next.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+    }
+  }));
+}
+
+function stepComplete() {
+  let ok = true;
+  $("#stepBody").querySelectorAll(".q").forEach(box => {
+    const filled = box.dataset.q !== undefined ? state.answers[+box.dataset.q] : state.info[box.dataset.info];
+    if (!filled) { ok = false; box.classList.add("missing"); box.classList.remove("done"); }
+  });
+  if (!ok) $("#stepBody .missing").scrollIntoView({ block: "center", behavior: "smooth" });
+  return ok;
+}
+
+// 오른쪽 성향 비율(0~100)
+// 답 1~6을 -5, -3, -1, +1, +3, +5로 바꿔 더함. 성향마다 문항이 5개(홀수)라
+// 홀수 5개의 합은 항상 홀수 → 합이 0이 될 수 없어 50%가 절대 나오지 않음
+function rightPercent(key, answers) {
+  const qs = QUESTIONS.map((q, i) => ({ ...q, i })).filter(q => q.axis === key);
+  const sum = qs.reduce((acc, q) => acc + (2 * answers[q.i] - 7) * q.dir, 0);
+  const max = 5 * qs.length;
+  return Math.round((sum + max) / (2 * max) * 100);
+}
+
+function analyze(answers) {
+  return AXES.map(a => {
+    const r = rightPercent(a.key, answers);
+    const side = r >= 50 ? "right" : "left";
+    return { a, r, side, pole: a[side], pct: side === "right" ? r : 100 - r };
+  });
+}
+
+// ---------- 결과 이미지(캔버스) ----------
+const BRAND = "#2bae7e";
+const IMG_COLORS = { time: "#5b6cf0", clean: "#1aa6a0", sound: "#f0795b", stay: "#e3a033", social: "#c05fb8" };
+function tint(hex, a) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const m = c => Math.round(c * a + 255 * (1 - a));
+  return `rgb(${m(r)},${m(g)},${m(b)})`;
+}
+function rrect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function drawResultImage(res, chips) {
+  const W = 1080, D = '"Jua", "IBM Plex Sans KR", sans-serif', B = '"IBM Plex Sans KR", sans-serif';
+  const c = document.createElement("canvas"); let x = c.getContext("2d");
+
+  // 생활 정보 칩 줄바꿈 계산
+  x.font = `500 26px ${B}`;
+  const pad = 22, ch = 50, cg = 12, maxRow = W - 120;
+  const rows = [[]]; let rowW = 0;
+  chips.forEach(t => {
+    const w = x.measureText(t).width + pad * 2;
+    if (rows[rows.length - 1].length && rowW + cg + w > maxRow) { rows.push([]); rowW = 0; }
+    rowW += (rows[rows.length - 1].length ? cg : 0) + w;
+    rows[rows.length - 1].push({ t, w });
+  });
+  const chipTop = 370, bandBottom = chipTop + rows.length * (ch + 12) + 40;
+  const H = bandBottom + 70 + res.length * 140 + 30;
+  c.width = W; c.height = H; x = c.getContext("2d");
+
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#eef8f4"; x.fillRect(0, 0, W, bandBottom);
+  x.textAlign = "center";
+  x.fillStyle = "#727b88"; x.font = `500 30px ${B}`; x.fillText("기숙사 룸메 성향 검사", W / 2, 80);
+
+  const ts = 140, gap = 20, dw = 44; let tx = (W - (ts * 5 + gap * 5 + dw)) / 2;
+  res.forEach((r, k) => {
+    if (k === 4) { x.fillStyle = "#9aa3ae"; x.font = `96px ${D}`; x.fillText("-", tx + dw / 2, 118 + ts / 2 + 34); tx += dw + gap; }
+    x.fillStyle = IMG_COLORS[r.a.key]; rrect(x, tx, 118, ts, ts, 28); x.fill();
+    x.fillStyle = "#ffffff"; x.font = `96px ${D}`; x.fillText(r.pole.code, tx + ts / 2, 118 + ts / 2 + 34);
+    x.fillStyle = IMG_COLORS[r.a.key]; x.font = `700 30px ${B}`; x.fillText(r.pole.label, tx + ts / 2, 118 + ts + 50);
+    tx += ts + gap;
+  });
+
+  x.font = `500 26px ${B}`;
+  rows.forEach((row, ri) => {
+    const total = row.reduce((s, c2) => s + c2.w, 0) + cg * (row.length - 1);
+    let cx = (W - total) / 2; const cy = chipTop + ri * (ch + 12);
+    row.forEach(({ t, w }) => {
+      x.fillStyle = "#ffffff"; rrect(x, cx, cy, w, ch, 25); x.fill();
+      x.strokeStyle = "#dfe4ea"; x.lineWidth = 2; x.stroke();
+      x.fillStyle = "#2b3340"; x.fillText(t, cx + w / 2, cy + 34);
+      cx += w + cg;
+    });
+  });
+
+  let y = bandBottom + 70; const L = 90, R = W - 90, w = R - L;
+  res.forEach(r => {
+    const col = IMG_COLORS[r.a.key], left = r.side === "left";
+    x.textAlign = "left"; x.fillStyle = "#727b88"; x.font = `600 28px ${B}`; x.fillText(r.a.name, L, y);
+    x.textAlign = "right"; x.fillStyle = col; x.font = `700 34px ${B}`; x.fillText(`${r.pct}% ${r.pole.label}`, R, y);
+    const ty = y + 26, th = 22, pos = L + w * r.r / 100, mid = L + w / 2;
+    x.fillStyle = tint(col, 0.18); rrect(x, L, ty, w, th, 11); x.fill();
+    x.fillStyle = col; rrect(x, Math.min(pos, mid), ty, Math.abs(pos - mid), th, 11); x.fill();
+    x.beginPath(); x.arc(pos, ty + th / 2, 18, 0, Math.PI * 2);
+    x.fillStyle = "#ffffff"; x.fill(); x.lineWidth = 7; x.strokeStyle = col; x.stroke();
+    x.font = `500 24px ${B}`;
+    x.textAlign = "left"; x.fillStyle = left ? col : "#9aa3ae"; x.fillText(`${r.a.left.code} ${r.a.left.label}`, L, ty + th + 38);
+    x.textAlign = "right"; x.fillStyle = left ? "#9aa3ae" : col; x.fillText(`${r.a.right.label} ${r.a.right.code}`, R, ty + th + 38);
+    y += 140;
+  });
+  return c;
+}
+
+function josa(word) { const c = word.charCodeAt(word.length - 1) - 0xAC00; return c >= 0 && c % 28 ? "은" : "는"; }
+
+// 다섯 성향을 합쳐 종합 설명 만들기
+function overallText(by) {
+  const t = by.time.side === "left", c = by.clean.side === "left", q = by.sound.side === "left", h = by.stay.side === "left", i = by.social.side === "left";
+  const s1 = (t ? "일찍 자고 일찍 일어나는 규칙적인 생활을 하고, " : "밤늦게까지 깨어 있는 생활에 익숙하고, ")
+           + (c ? "방은 늘 깔끔하게 정리해 두는 편이에요." : "정리에는 크게 얽매이지 않고 편하게 지내는 편이에요.");
+  const s2 = (q ? "방에서는 조용히 지내는 걸 좋아하고 생활 소음에 민감한 편이며, " : "방에서 통화나 음악처럼 소리를 내는 일이 많은 편이며, ")
+           + (h ? "수업이 없을 때는 대부분 방에서 시간을 보내요." : "도서관이나 카페, 본가 등 밖에서 지내는 시간이 많아요.");
+  const s3 = i ? "룸메이트와는 적당한 거리를 두고 서로의 생활을 존중하는 관계를 원해요." : "룸메이트와 밥도 같이 먹고 이야기도 나누는 친한 관계를 원해요.";
+  const s4 = `그래서 나처럼 ${by.time.pole.label}이면서 ${c ? "깔끔하고" : "정리에 너그럽고"} ${q ? "조용한" : "소리에 너그러운"} 룸메이트와 가장 잘 맞아요.`;
+  const soft = Object.values(by).filter(x => x.pct < 60).map(x => x.a.name);
+  const s5 = soft.length ? `${soft.join(", ")}${josa(soft[soft.length - 1])} 한쪽으로 크게 치우치지 않아서 상대에 맞춰 조절하기 쉬운 편이에요.` : "";
+  return [s1, s2, s3, s4, s5].filter(Boolean).join(" ");
+}
+
+function renderResult(answers, info, isSample) {
+  const res = analyze(answers);
+  const by = Object.fromEntries(res.map(x => [x.a.key, x]));
+  const code = res.slice(0, 4).map(x => x.pole.code).join("") + "-" + res[4].pole.code;
+  const labels = res.map(x => x.pole.label).join(" · ");
+  const overall = overallText(by);
+  const infoChips = [info.smoke, `코골이·잠버릇 ${info.snore}`, `방 온도 ${info.temp}`, `방에서 음식 ${info.food}`];
+
+  const summary =
+`[룸메 성향 검사 결과] ${code}
+${labels}
+
+${overall}
+
+${res.map(x => `· ${x.a.name}: ${x.pole.label} ${x.pct}%`).join("\n")}
+· 흡연: ${info.smoke} / 코골이·잠버릇: ${info.snore}
+· 방 온도: ${info.temp} / 방에서 음식: ${info.food}`;
+
+  $("#result").innerHTML = `
+    <section class="band">
+      <div class="inner center">
+        ${isSample ? `<p class="note">예시 결과예요</p>` : ""}
+        <p class="muted">나의 기숙사 생활 유형</p>
+        <div class="code" aria-label="유형 코드 ${code}: ${labels}">
+          ${res.map((x, k) => `${k === 4 ? `<div class="dash" aria-hidden="true">-</div>` : ""}<div class="letter" style="--dc:${x.a.color}"><span>${x.pole.code}</span><small>${x.pole.label}</small></div>`).join("")}
+        </div>
+        <div class="overall"><b>종합 설명</b><p>${overall}</p></div>
+        <div class="chips">${infoChips.map(c => `<span class="chip">${esc(c)}</span>`).join("")}</div>
+      </div>
+    </section>
+    <section class="main">
+      <div class="inner" style="gap:28px">
+        <div class="card">
+          <h2>성향별 결과</h2>
+          <div class="traits">
+            ${res.map(x => {
+              const left = x.side === "left";
+              const pos = x.r; // 막대 위 위치(왼쪽 0 ~ 오른쪽 100)
+              const fill = left ? `left:${pos}%;right:50%` : `left:50%;right:${100 - pos}%`;
+              return `
+              <div class="trait" style="--dc:${x.a.color}">
+                <div class="trait-top"><b>${x.a.name}</b><strong>${x.pct}% ${x.pole.label}</strong></div>
+                <div class="meter" role="img" aria-label="${x.a.name}: ${x.pole.label} ${x.pct}%">
+                  <span class="fill" style="${pos === 50 ? "display:none" : fill}"></span>
+                  <span class="knob" style="left:${pos}%"></span>
+                </div>
+                <div class="poles"><span class="${left ? "on" : ""}">${x.a.left.code} ${x.a.left.label}</span><span class="${left ? "" : "on"}">${x.a.right.label} ${x.a.right.code}</span></div>
+                <p>${x.a.desc[x.side]}</p>
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>게시글에 붙여넣기</h2>
+          <p class="muted">결과 이미지를 룸메이트 구하기 글에 붙여넣으면 상대가 내 생활 성향을 한눈에 볼 수 있어요.</p>
+          <div class="share">
+            <img id="shareImg" alt="${code} ${labels} 결과 이미지">
+            <div class="share-side">
+              <button class="btn" id="copyImgBtn">이미지 복사하기</button>
+              <button class="btn ghost" id="saveImgBtn">이미지 저장하기</button>
+              <button class="btn ghost" id="copyBtn">글로 복사하기</button>
+              <span class="toast" id="toast" aria-live="polite"></span>
+              <p class="note">복사가 안 되면 이미지를 길게 눌러(휴대폰) 또는 오른쪽 클릭해서(PC) 복사하거나 저장하세요.</p>
+            </div>
+          </div>
+          <details id="textBox"><summary>글로 된 결과 보기</summary><textarea id="summaryText" readonly>${esc(summary)}</textarea></details>
+          <div class="row" style="justify-content:flex-start">
+            <button class="btn ghost" id="retryBtn">${isSample ? "검사 시작하기" : "다시 검사하기"}</button>
+          </div>
+        </div>
+      </div>
+    </section>`;
+
+  let canvas = null, imgBlob = null;
+  const fontLoads = ["84px Jua", "500 30px 'IBM Plex Sans KR'", "700 30px 'IBM Plex Sans KR'"]
+    .map(f => { try { return document.fonts.load(f).catch(() => {}); } catch (e) { return null; } });
+  Promise.all(fontLoads).then(() => {
+    canvas = drawResultImage(res, infoChips);
+    $("#shareImg").src = canvas.toDataURL("image/png");
+    canvas.toBlob(b => { imgBlob = b; }, "image/png");
+  });
+
+  const toast = msg => { $("#toast").textContent = msg; };
+  const blobNow = () => imgBlob ? Promise.resolve(imgBlob) : new Promise(r => canvas.toBlob(r, "image/png"));
+
+  $("#copyImgBtn").addEventListener("click", () => {
+    const ok = () => toast("이미지를 복사했어요. 게시글에 붙여넣으세요");
+    const fail = () => toast(!window.isSecureContext
+      ? "파일을 직접 열면 브라우저가 이미지 복사를 막아요. '이미지 저장하기'를 쓰거나, 사이트(https)에 올려서 열면 복사돼요."
+      : "이 브라우저에서는 이미지 복사가 안 돼요. '이미지 저장하기'로 저장한 뒤 게시글에 올려 주세요.");
+    if (!canvas || !window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) { fail(); return; }
+    const write = data => navigator.clipboard.write([new ClipboardItem({ "image/png": data })]);
+    let p;
+    try { p = write(imgBlob || blobNow()); } catch (e) { fail(); return; }
+    p.then(ok).catch(() => { try { write(blobNow()).then(ok, fail); } catch (e) { fail(); } });
+  });
+
+  $("#saveImgBtn").addEventListener("click", async () => {
+    if (!canvas) return;
+    const blob = await blobNow();
+    const fileName = `roommate_${code}.png`;
+    try {
+      const file = new File([blob], fileName, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "룸메 성향 검사 결과" });
+        toast("공유 화면에서 '이미지 저장'이나 올릴 앱을 고르세요");
+        return;
+      }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = fileName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast("저장이 안 되면 이미지를 길게 누르거나 오른쪽 클릭해서 저장하세요");
+  });
+
+  $("#copyBtn").addEventListener("click", () => {
+    const ta = $("#summaryText");
+    const done = () => { $("#toast").textContent = "글을 복사했어요"; };
+    const fallback = () => { $("#textBox").open = true; ta.focus(); ta.select(); $("#toast").textContent = "글이 선택됐어요. 길게 눌러 복사하세요"; };
+    try { navigator.clipboard.writeText(ta.value).then(done, fallback); } catch (e) { fallback(); }
+  });
+  $("#retryBtn").addEventListener("click", () => {
+    if (!isSample) { state.answers = {}; state.info = {}; }
+    state.step = 0; save(); show("#quiz"); renderStep();
+  });
+  show("#result");
+}
+
+$("#startBtn").addEventListener("click", () => { state.step = 0; show("#quiz"); renderStep(); });
+$("#sampleBtn").addEventListener("click", () => {
+  const sample = [2,5,6,5,3, 6,5,2,4,5, 2,2,1,3,3, 3,5,6,4,5, 5,2,1,4,3];
+  const ans = Object.fromEntries(sample.map((v, i) => [i, v]));
+  renderResult(ans, { smoke: "비흡연", snore: "없음", temp: "시원하게", food: "간단한 것만" }, true);
+});
+$("#prevBtn").addEventListener("click", () => {
+  if (state.step === 0) { show("#intro"); return; }
+  state.step--; save(); renderStep(); window.scrollTo(0, 0);
+});
+$("#nextBtn").addEventListener("click", () => {
+  if (!stepComplete()) return;
+  if (state.step < TOTAL_STEPS - 1) { state.step++; save(); renderStep(); window.scrollTo(0, 0); }
+  else renderResult(state.answers, state.info, false);
+});
+
+load();
+renderIntro();
+</script>
+
+</body>
+</html>
